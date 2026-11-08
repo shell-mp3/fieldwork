@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Build CLI
+        run: npm run build
+      - name: Build playground
+        run: npm run build:web
+
+  determinism:
+    # The whole point of the project: a seed must always produce the same bytes.
+    # Regenerate the committed gallery and fail if anything moved.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Regenerate gallery from manifest
+        run: npm run gallery
+      - name: Assert gallery is byte-identical
+        run: |
+          if ! git diff --exit-code --stat -- gallery; then
+            echo "::error::Regenerating the gallery changed files — rendering is not deterministic."
+            exit 1
+          fi
+          echo "Gallery reproduced byte-for-byte."
