@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>fieldwork — generative art playground</title>
+    <meta
+      name="description"
+      content="Deterministic generative art: flow fields and reaction-diffusion. Every piece is a pure function of its seed."
+    />
+    <style>
+      :root {
+        --bg: #0e1113;
+        --panel: #171b1e;
+        --panel-2: #1f2529;
+        --line: #2b3237;
+        --text: #e6e9ea;
+        --muted: #8e9ba1;
+        --accent: #4fb8a0;
+        --radius: 8px;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        min-height: 100vh;
+      }
+      .panel {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 20px 16px 48px;
+        overflow-y: auto;
+        max-height: 100vh;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 2px;
+        letter-spacing: -0.01em;
+      }
+      .tagline {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0 0 20px;
+      }
+      .tagline a {
+        color: var(--muted);
+      }
+      fieldset {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin: 0 0 14px;
+      }
+      legend {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0 6px;
+      }
+      label {
+        display: block;
+        margin-bottom: 10px;
+      }
+      .label-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 3px;
+      }
+      .label-row span:first-child {
+        font-size: 12px;
+      }
+      .value {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 7px 9px;
+        font: inherit;
+      }
+      input[type="text"] {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row > * {
+        flex: 1;
+      }
+      button {
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 9px 10px;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: progress;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #06221d;
+        font-weight: 600;
+      }
+      .stage {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        min-width: 0;
+      }
+      canvas {
+        max-width: 100%;
+        max-height: calc(100vh - 48px);
+        border-radius: 4px;
+        box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
+        background: var(--panel-2);
+      }
+      .status {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 10px;
+        min-height: 2.6em;
+      }
+      .status[data-busy="true"] {
+        color: var(--accent);
+      }
+      .inspiration {
+        color: var(--muted);
+        font-size: 11px;
+        font-style: italic;
+        margin-top: 6px;
+      }
+      @media (max-width: 860px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .panel {
+          max-height: none;
+          border-right: none;
+          border-bottom: 1px solid var(--line);
+        }
+        .stage {
+          padding: 16px;
+        }
+        canvas {
+          max-height: 70vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <h1>fieldwork</h1>
+        <p class="tagline">
+          Every piece is a pure function of its seed.
+          <a href="https://github.com/shell-mp3/fieldwork">source</a>
+        </p>
+
+        <fieldset>
+          <legend>Piece</legend>
+          <label>
+            <div class="label-row"><span>Algorithm</span></div>
+            <select id="algo">
+              <option value="flow">flow field</option>
+              <option value="reaction">reaction-diffusion</option>
+            </select>
+          </label>
+          <label>
+            <div class="label-row"><span>Seed</span></div>
+            <input id="seed" type="text" spellcheck="false" autocomplete="off" />
+          </label>
+          <label>
+            <div class="label-row"><span>Palette</span></div>
+            <select id="palette"></select>
+          </label>
+          <p class="inspiration" id="inspiration"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Parameters</legend>
+          <div id="params"></div>
+          <button type="button" id="reset">Reset to defaults</button>
+        </fieldset>
+
+        <div class="row">
+          <button type="button" class="primary" id="render">Render</button>
+          <button type="button" id="randomize">Randomize</button>
+        </div>
+        <div class="row" style="margin-top: 8px">
+          <button type="button" id="png">Download PNG</button>
+          <button type="button" id="svg">Download SVG</button>
+        </div>
+        <p class="status" id="status">Ready.</p>
+      </aside>
+
+      <main class="stage">
+        <canvas id="canvas" width="600" height="800"></canvas>
+      </main>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
