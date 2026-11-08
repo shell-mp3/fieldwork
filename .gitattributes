@@ -1,0 +1,6 @@
+# The determinism check regenerates gallery/ in CI on Linux and compares bytes.
+# Line-ending translation would make that comparison fail for reasons that have
+# nothing to do with the renderers, so normalise text and never touch binaries.
+* text=auto eol=lf
+*.png binary
+*.svg text eol=lf
