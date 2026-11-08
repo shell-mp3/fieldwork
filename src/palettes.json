@@ -1,0 +1,26 @@
+{
+  "kelp": {
+    "name": "kelp",
+    "inspiration": "Pacific kelp forest at 20 m, where green has already gone and only blue is left",
+    "background": "#07201f",
+    "colors": ["#1f6f6a", "#3a9d91", "#7fc8b2", "#c9e8d2", "#0d3b3a"]
+  },
+  "riso": {
+    "name": "riso",
+    "inspiration": "Two-colour risograph print on uncoated stock, fluorescent pink over blue",
+    "background": "#f4f0e4",
+    "colors": ["#ff4d8d", "#2b4bd8", "#1a1a1a", "#ff9ec4", "#6f86e8"]
+  },
+  "oxide": {
+    "name": "oxide",
+    "inspiration": "Weathered copper roofing: verdigris creeping over rust on a wet slate day",
+    "background": "#1c2024",
+    "colors": ["#4fb8a0", "#b9623a", "#d99b57", "#8fa3a8", "#2f4f4a"]
+  },
+  "graphite": {
+    "name": "graphite",
+    "inspiration": "2B pencil on tracing paper, held up to a window",
+    "background": "#f6f4ef",
+    "colors": ["#2a2a2a", "#555555", "#8a8a8a", "#b4b2ad", "#1a1a1a"]
+  }
+}
