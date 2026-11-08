@@ -1,0 +1,189 @@
+{
+  "thumbWidth": 720,
+  "supersample": 2,
+  "pieces": [
+    {
+      "file": "01-harbour-drift",
+      "title": "Harbour Drift",
+      "algo": "flow",
+      "seed": "harbour-drift",
+      "palette": "kelp",
+      "params": { "particles": 2600, "steps": 460, "noiseScale": 0.0016, "octaves": 3 }
+    },
+    {
+      "file": "02-tidewrack",
+      "title": "Tidewrack",
+      "algo": "flow",
+      "seed": "tidewrack-88",
+      "palette": "oxide",
+      "params": {
+        "particles": 3200,
+        "steps": 700,
+        "stepLength": 1.8,
+        "noiseScale": 0.0007,
+        "octaves": 2,
+        "lineWidth": 1,
+        "opacity": 0.7
+      }
+    },
+    {
+      "file": "03-foolscap",
+      "title": "Foolscap",
+      "algo": "flow",
+      "seed": "foolscap",
+      "palette": "graphite",
+      "params": {
+        "particles": 2400,
+        "steps": 380,
+        "noiseScale": 0.0022,
+        "octaves": 5,
+        "lineWidth": 0.8,
+        "opacity": 0.75,
+        "colorScale": 0.0012
+      }
+    },
+    {
+      "file": "04-press-check",
+      "title": "Press Check",
+      "algo": "flow",
+      "seed": "press-check-2",
+      "palette": "riso",
+      "params": {
+        "particles": 850,
+        "steps": 520,
+        "stepLength": 3,
+        "noiseScale": 0.0012,
+        "octaves": 2,
+        "lineWidth": 3.4,
+        "opacity": 0.9
+      }
+    },
+    {
+      "file": "05-undertow",
+      "title": "Undertow",
+      "algo": "flow",
+      "seed": "undertow-419",
+      "palette": "kelp",
+      "params": {
+        "particles": 3600,
+        "steps": 300,
+        "stepLength": 1.6,
+        "noiseScale": 0.0042,
+        "octaves": 4,
+        "lineWidth": 1,
+        "opacity": 0.8,
+        "colorScale": 0.0018
+      }
+    },
+    {
+      "file": "06-first-frost",
+      "title": "First Frost",
+      "algo": "flow",
+      "seed": "first-frost",
+      "palette": "graphite",
+      "params": {
+        "particles": 1400,
+        "steps": 1100,
+        "stepLength": 1.2,
+        "noiseScale": 0.0009,
+        "octaves": 3,
+        "lineWidth": 0.6,
+        "opacity": 0.85,
+        "minLength": 120
+      }
+    },
+    {
+      "file": "07-coral-bloom",
+      "title": "Coral Bloom",
+      "algo": "reaction",
+      "seed": "coral-7",
+      "palette": "riso",
+      "params": {
+        "gridSize": 200,
+        "iterations": 11000,
+        "feed": 0.0545,
+        "kill": 0.062,
+        "contours": 4,
+        "lineWidth": 1.4
+      }
+    },
+    {
+      "file": "08-mitosis",
+      "title": "Mitosis",
+      "algo": "reaction",
+      "seed": "1842",
+      "palette": "oxide",
+      "params": {
+        "gridSize": 190,
+        "iterations": 14000,
+        "feed": 0.0367,
+        "kill": 0.0649,
+        "contours": 5,
+        "seedSpots": 26
+      }
+    },
+    {
+      "file": "09-labyrinth",
+      "title": "Labyrinth",
+      "algo": "reaction",
+      "seed": "labyrinth-3",
+      "palette": "graphite",
+      "params": {
+        "gridSize": 200,
+        "iterations": 12000,
+        "feed": 0.029,
+        "kill": 0.057,
+        "contours": 3,
+        "lineWidth": 1.6,
+        "seedSpots": 30
+      }
+    },
+    {
+      "file": "10-solitons",
+      "title": "Solitons",
+      "algo": "reaction",
+      "seed": "solitons-x",
+      "palette": "kelp",
+      "params": {
+        "gridSize": 180,
+        "iterations": 10000,
+        "feed": 0.03,
+        "kill": 0.062,
+        "contours": 5,
+        "seedSpots": 22
+      }
+    },
+    {
+      "file": "11-worms",
+      "title": "Worms",
+      "algo": "reaction",
+      "seed": "worms-61",
+      "palette": "oxide",
+      "params": {
+        "gridSize": 200,
+        "iterations": 9000,
+        "feed": 0.078,
+        "kill": 0.061,
+        "contours": 4,
+        "lineWidth": 1.4,
+        "seedSpots": 34
+      }
+    },
+    {
+      "file": "12-u-skate",
+      "title": "U-Skate",
+      "algo": "reaction",
+      "seed": "u-skate-world",
+      "palette": "riso",
+      "params": {
+        "gridSize": 190,
+        "iterations": 13000,
+        "feed": 0.062,
+        "kill": 0.0609,
+        "contours": 6,
+        "lineWidth": 1.1,
+        "seedSpots": 16
+      }
+    }
+  ]
+}
