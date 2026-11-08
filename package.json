@@ -27,6 +27,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:web": "vite build",
+    "preview:web": "vite preview",
     "dev": "vite",
     "cli": "npm run build --silent && node dist/cli.js",
     "gallery": "npm run build --silent && node dist/gallery.js",
