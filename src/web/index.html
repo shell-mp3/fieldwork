@@ -6,7 +6,7 @@
     <title>fieldwork — generative art playground</title>
     <meta
       name="description"
-      content="Deterministic generative art: flow fields and reaction-diffusion. Every piece is a pure function of its seed."
+      content="Make generative art in your browser: flow fields and reaction-diffusion. Pick a preset, tweak it, download it. Every piece is a shareable link."
     />
     <style>
       :root {
@@ -16,12 +16,16 @@
         --line: #2b3237;
         --text: #e6e9ea;
         --muted: #8e9ba1;
+        --faint: #6b767b;
         --accent: #4fb8a0;
         --radius: 8px;
         --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
       }
       body {
         margin: 0;
@@ -31,13 +35,13 @@
       }
       .app {
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: 330px 1fr;
         min-height: 100vh;
       }
       .panel {
         background: var(--panel);
         border-right: 1px solid var(--line);
-        padding: 20px 16px 48px;
+        padding: 20px 16px 56px;
         overflow-y: auto;
         max-height: 100vh;
       }
@@ -49,7 +53,7 @@
       .tagline {
         color: var(--muted);
         font-size: 12px;
-        margin: 0 0 20px;
+        margin: 0 0 18px;
       }
       .tagline a {
         color: var(--muted);
@@ -59,6 +63,7 @@
         border-radius: var(--radius);
         padding: 12px;
         margin: 0 0 14px;
+        min-width: 0;
       }
       legend {
         color: var(--muted);
@@ -69,7 +74,10 @@
       }
       label {
         display: block;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+      }
+      label:last-child {
+        margin-bottom: 0;
       }
       .label-row {
         display: flex;
@@ -86,9 +94,16 @@
         font-size: 11px;
         color: var(--accent);
       }
+      .help {
+        color: var(--faint);
+        font-size: 11px;
+        line-height: 1.45;
+        margin: 2px 0 5px;
+      }
       input[type="range"] {
         width: 100%;
         accent-color: var(--accent);
+        margin: 0;
       }
       input[type="text"],
       select {
@@ -97,7 +112,7 @@
         color: var(--text);
         border: 1px solid var(--line);
         border-radius: 6px;
-        padding: 7px 9px;
+        padding: 8px 9px;
         font: inherit;
       }
       input[type="text"] {
@@ -110,18 +125,28 @@
       }
       .row > * {
         flex: 1;
+        min-width: 0;
       }
       button {
         background: var(--panel-2);
         color: var(--text);
         border: 1px solid var(--line);
         border-radius: 6px;
-        padding: 9px 10px;
+        padding: 10px;
         font: inherit;
         cursor: pointer;
+        /* Comfortable to hit on a phone. */
+        min-height: 40px;
       }
       button:hover:not(:disabled) {
         border-color: var(--accent);
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
       button:disabled {
         opacity: 0.45;
@@ -133,62 +158,167 @@
         color: #06221d;
         font-weight: 600;
       }
+      /* ── Presets ───────────────────────────────────────────────── */
+      .presets {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+      .preset {
+        text-align: left;
+        padding: 7px 8px;
+        line-height: 1.25;
+        min-height: 0;
+      }
+      .preset strong {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+      .preset span {
+        display: block;
+        font-size: 9.5px;
+        color: var(--faint);
+        font-family: var(--mono);
+        margin-top: 1px;
+      }
+      .preset[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: rgb(79 184 160 / 0.1);
+      }
+      .preset-blurb {
+        color: var(--faint);
+        font-size: 11px;
+        font-style: italic;
+        margin: 8px 0 0;
+        min-height: 2.4em;
+      }
+      /* ── Stage ─────────────────────────────────────────────────── */
       .stage {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         padding: 24px;
         min-width: 0;
+        gap: 12px;
+      }
+      .canvas-wrap {
+        position: relative;
+        display: flex;
       }
       canvas {
         max-width: 100%;
-        max-height: calc(100vh - 48px);
+        max-height: calc(100vh - 110px);
         border-radius: 4px;
         box-shadow: 0 10px 40px rgb(0 0 0 / 0.5);
         background: var(--panel-2);
+      }
+      .bar {
+        width: 100%;
+        max-width: 420px;
+        height: 2px;
+        background: var(--line);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .bar[hidden] {
+        display: none;
+      }
+      .bar div {
+        height: 100%;
+        width: 0;
+        background: var(--accent);
+        transition: width 0.2s linear;
       }
       .status {
         font-family: var(--mono);
         font-size: 11px;
         color: var(--muted);
-        margin-top: 10px;
-        min-height: 2.6em;
+        margin: 0;
+        text-align: center;
+        min-height: 1.4em;
       }
       .status[data-busy="true"] {
         color: var(--accent);
       }
       .inspiration {
-        color: var(--muted);
+        color: var(--faint);
         font-size: 11px;
         font-style: italic;
-        margin-top: 6px;
+        margin: 6px 0 0;
       }
+      details > summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        list-style: none;
+        padding: 2px 0;
+      }
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
+      details > summary::before {
+        content: "▸ ";
+      }
+      details[open] > summary::before {
+        content: "▾ ";
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      /* ── Phone ─────────────────────────────────────────────────── */
       @media (max-width: 860px) {
         .app {
           grid-template-columns: 1fr;
         }
+        /* The art comes first. Landing on a wall of sliders tells a visitor
+           nothing about what this is. */
+        .stage {
+          order: -1;
+          padding: 16px 16px 4px;
+        }
         .panel {
           max-height: none;
           border-right: none;
-          border-bottom: 1px solid var(--line);
-        }
-        .stage {
-          padding: 16px;
+          border-top: 1px solid var(--line);
+          padding: 18px 16px 48px;
         }
         canvas {
-          max-height: 70vh;
+          max-height: 58vh;
         }
       }
     </style>
   </head>
   <body>
     <div class="app">
+      <main class="stage">
+        <div class="canvas-wrap">
+          <canvas id="canvas" width="600" height="800" aria-label="Generated artwork"></canvas>
+        </div>
+        <div class="bar" id="bar" hidden><div id="barFill"></div></div>
+        <p class="status" id="status" role="status">Starting…</p>
+      </main>
+
       <aside class="panel">
         <h1>fieldwork</h1>
         <p class="tagline">
           Every piece is a pure function of its seed.
           <a href="https://github.com/shell-mp3/fieldwork">source</a>
         </p>
+
+        <fieldset>
+          <legend>Start from</legend>
+          <div class="presets" id="presets"></div>
+          <p class="preset-blurb" id="presetBlurb"></p>
+        </fieldset>
 
         <fieldset>
           <legend>Piece</legend>
@@ -201,7 +331,7 @@
           </label>
           <label>
             <div class="label-row"><span>Seed</span></div>
-            <input id="seed" type="text" spellcheck="false" autocomplete="off" />
+            <input id="seed" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" />
           </label>
           <label>
             <div class="label-row"><span>Palette</span></div>
@@ -210,26 +340,39 @@
           <p class="inspiration" id="inspiration"></p>
         </fieldset>
 
-        <fieldset>
-          <legend>Parameters</legend>
-          <div id="params"></div>
-          <button type="button" id="reset">Reset to defaults</button>
-        </fieldset>
-
         <div class="row">
           <button type="button" class="primary" id="render">Render</button>
-          <button type="button" id="randomize">Randomize</button>
+          <button type="button" id="randomize">New seed</button>
         </div>
-        <div class="row" style="margin-top: 8px">
-          <button type="button" id="png">Download PNG</button>
-          <button type="button" id="svg">Download SVG</button>
-        </div>
-        <p class="status" id="status">Ready.</p>
-      </aside>
 
-      <main class="stage">
-        <canvas id="canvas" width="600" height="800"></canvas>
-      </main>
+        <fieldset style="margin-top: 14px">
+          <legend>Save &amp; share</legend>
+          <label>
+            <div class="label-row"><span>PNG size</span></div>
+            <select id="scale">
+              <option value="1">1× — as shown</option>
+              <option value="2" selected>2× — retina</option>
+              <option value="4">4× — print</option>
+            </select>
+          </label>
+          <div class="row">
+            <button type="button" id="png">PNG</button>
+            <button type="button" id="svg">SVG</button>
+          </div>
+          <div class="row" style="margin-top: 8px">
+            <button type="button" id="copy">Copy link to this piece</button>
+          </div>
+        </fieldset>
+
+        <details id="paramsBox">
+          <summary>Fine tuning</summary>
+          <fieldset style="margin-top: 10px">
+            <legend>Parameters</legend>
+            <div id="params"></div>
+          </fieldset>
+          <button type="button" id="reset" style="width: 100%">Reset to preset defaults</button>
+        </details>
+      </aside>
     </div>
     <script type="module" src="./main.ts"></script>
   </body>
