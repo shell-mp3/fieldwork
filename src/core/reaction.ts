@@ -84,8 +84,25 @@ export function laplacian(grid: Float32Array, n: number, x: number, y: number): 
   return 0.2 * ortho + 0.05 * diag - c;
 }
 
-/** Runs the simulation and returns the final concentration field of B. */
-export function simulate(p: ReactionParams): Field {
+export interface SimulateHooks {
+  /** Call `onStep` every this many iterations. */
+  every: number;
+  /**
+   * Receives the live B field mid-run. The array is the simulation's own
+   * working buffer and is reused, so read it or copy it — do not keep it.
+   */
+  onStep: (iteration: number, field: Field) => void;
+}
+
+/**
+ * Runs the simulation and returns the final concentration field of B.
+ *
+ * `hooks` only observes. It never feeds anything back into the state, so a
+ * run with hooks and a run without produce identical output — there is a test
+ * for exactly that, because a progress callback that perturbed the result
+ * would quietly break every seed.
+ */
+export function simulate(p: ReactionParams, hooks?: SimulateHooks): Field {
   const n = p.gridSize;
   const size = n * n;
   let a = new Float32Array(size).fill(1);
@@ -156,20 +173,18 @@ export function simulate(p: ReactionParams): Field {
     b = nextB;
     nextA = ta;
     nextB = tb;
+
+    if (hooks && (iter + 1) % hooks.every === 0 && iter + 1 < p.iterations) {
+      hooks.onStep(iter + 1, { width: n, height: n, data: b });
+    }
   }
 
   return { width: n, height: n, data: b };
 }
 
-export function generateReaction(
-  params: Partial<ReactionParams> & { seed: string },
-): Scene {
-  const p: ReactionParams = { ...reactionDefaults, ...params };
-  if (p.gridSize < 8) throw new Error('gridSize must be >= 8');
-  if (p.contours < 1) throw new Error('contours must be >= 1');
-
+/** Contours a settled (or part-settled) field into a drawable scene. */
+function fieldToScene(field: Field, p: ReactionParams): Scene {
   const palette = getPalette(p.palette);
-  const field = simulate(p);
   const { min, max } = fieldRange(field);
   const span = max - min;
 
@@ -219,4 +234,39 @@ export function generateReaction(
       },
     },
   };
+}
+
+export interface ReactionProgress {
+  /** 0 to 1. */
+  fraction: number;
+  /** The pattern as it stands, drawable with any renderer. */
+  scene: Scene;
+}
+
+/**
+ * `onProgress`, when given, is called with a few intermediate scenes as the
+ * pattern develops. The simulation is several seconds of work and a spinner
+ * tells you nothing; watching the pattern grow tells you whether the feed and
+ * kill rates were worth waiting for.
+ */
+export function generateReaction(
+  params: Partial<ReactionParams> & { seed: string },
+  onProgress?: (progress: ReactionProgress) => void,
+): Scene {
+  const p: ReactionParams = { ...reactionDefaults, ...params };
+  if (p.gridSize < 8) throw new Error('gridSize must be >= 8');
+  if (p.contours < 1) throw new Error('contours must be >= 1');
+
+  if (!onProgress) return fieldToScene(simulate(p), p);
+
+  // Around a dozen updates: frequent enough to read as growth, rare enough
+  // that contouring does not become a meaningful share of the runtime.
+  const every = Math.max(1, Math.floor(p.iterations / 12));
+  const field = simulate(p, {
+    every,
+    onStep: (iteration, live) => {
+      onProgress({ fraction: iteration / p.iterations, scene: fieldToScene(live, p) });
+    },
+  });
+  return fieldToScene(field, p);
 }

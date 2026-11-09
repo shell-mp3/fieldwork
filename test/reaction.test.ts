@@ -113,6 +113,55 @@ describe('laplacian', () => {
   });
 });
 
+describe('progress reporting', () => {
+  const p = { ...reactionDefaults, ...small, seed: 'progress' } as ReactionParams;
+
+  it('observing the run does not change its result', () => {
+    // A progress hook that touched the working buffers would quietly change
+    // what every seed produces. Byte-equality is the only acceptable answer.
+    const plain = simulate(p);
+    const watched = simulate(p, { every: 10, onStep: () => {} });
+    expect(Array.from(watched.data)).toEqual(Array.from(plain.data));
+  });
+
+  it('reports increasing progress and stops short of the end', () => {
+    const seen: number[] = [];
+    simulate(p, { every: 25, onStep: (iteration) => seen.push(iteration) });
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen).toEqual([...seen].sort((a, b) => a - b));
+    expect(Math.max(...seen)).toBeLessThan(p.iterations);
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
+  it('hands the hook a field it can contour', () => {
+    let got = 0;
+    simulate(p, {
+      every: 40,
+      onStep: (_i, field) => {
+        got++;
+        expect(field.width).toBe(p.gridSize);
+        expect(field.data.length).toBe(p.gridSize * p.gridSize);
+      },
+    });
+    expect(got).toBeGreaterThan(0);
+  });
+
+  it('generateReaction returns the same scene with and without onProgress', () => {
+    const frames: number[] = [];
+    const watched = generateReaction({ ...small, seed: 'scene-progress' }, (progress) => {
+      frames.push(progress.fraction);
+      expect(progress.scene.layers.length).toBeGreaterThanOrEqual(0);
+    });
+    const plain = generateReaction({ ...small, seed: 'scene-progress' });
+    expect(watched).toEqual(plain);
+    expect(frames.length).toBeGreaterThan(0);
+    for (const f of frames) {
+      expect(f).toBeGreaterThan(0);
+      expect(f).toBeLessThan(1);
+    }
+  });
+});
+
 describe('generateReaction', () => {
   it('is deterministic', () => {
     expect(generateReaction({ seed: 'scene', ...small })).toEqual(
