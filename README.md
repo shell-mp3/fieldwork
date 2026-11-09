@@ -150,12 +150,37 @@ Huffman tables would close most of that gap; I chose ~200 auditable lines over t
 complexity, and the tests verify the bitstream by round-tripping it through zlib's
 *inflater* — the one direction where depending on zlib is safe.
 
-**A profile beat a guess.** The reaction-diffusion inner loop runs ~230 million cells at
-the defaults. It called a `laplacian()` helper that did four modulo operations per cell.
-Hoisting the wrap arithmetic into precomputed tables and inlining the two Laplacians cut
-a render from 4.6s to 2.9s (**1.6x**) with byte-identical output. I kept the original
-function as the readable reference and added a test asserting the fast path still matches
-it exactly — the optimisation is only safe because that test exists.
+**A profile beat a guess, twice.** The reaction-diffusion inner loop runs hundreds of
+millions of cells. First pass: it called a `laplacian()` helper doing four modulo
+operations per cell, so I hoisted the wrap arithmetic into tables and inlined both
+Laplacians — 4.6s to 2.9s.
+
+Second pass, after measuring rather than assuming where the rest went:
+
+| | before | after |
+| --- | --- | --- |
+| simulation (200² grid, 11k iterations) | 7.5s | 5.6s |
+| cost of the progress previews | +24% | +0.4% |
+| **total, as the playground runs it** | **9.1s** | **5.9s** |
+
+Two changes. The naive loop re-read all nine neighbours per cell per field — eighteen
+loads to produce two numbers. Stepping one column right, the old centre becomes the left
+and the old right becomes the centre, so only three cells per field are actually new: a
+sliding 3×3 window cut it to six loads. And the progress previews, which I had assumed
+were free, turned out to be a quarter of the runtime; they are now drawn at two contour
+levels on a decimated field, since a frame replaced half a second later does not need
+full detail.
+
+Every one of those changes keeps the arithmetic in the same order, so **all twelve gallery
+images came out byte-identical afterwards** — which is how I know the rewrite was a
+speed-up and not a different program. That check, plus a test asserting the hand-inlined
+Laplacian still matches the readable reference exactly, is the only reason an optimisation
+this fiddly is safe to make.
+
+**Where it stops.** The remaining 5.6s is the simulation itself, and the obvious next
+trick — regrouping the Laplacian's additions to share work between columns — would change
+the floating-point rounding and therefore every seed ever shared. Going faster from here
+means WebAssembly or the GPU, not cleverer arithmetic.
 
 **A test caught a bug I would have shipped.** Marching squares emits zero-length segments
 when a sample sits exactly on the threshold, which happens constantly with integer-valued
@@ -171,9 +196,9 @@ intermediate scenes, so you watch the pattern grow. The hook only observes — a
 a run with it is byte-identical to a run without, because a progress callback that nudged
 the state would silently change what every seed produces.
 
-**Still unsolved:** that wait is real, not just unexplained. Simulating at quarter
-resolution while a slider is moving, or moving the whole thing to the GPU, would make
-reaction-diffusion feel live rather than watchable. Neither is a small change.
+**Still unsolved:** the wait is shorter but still real. Making reaction-diffusion feel
+live rather than watchable needs WebAssembly or the GPU — see the note above on why the
+remaining JavaScript-level tricks would cost determinism.
 
 **Not implemented:** dynamic Huffman tables; interlaced or palette PNG; GPU/WebGL
 simulation; animation or frame export; any colour space beyond sRGB hex.
