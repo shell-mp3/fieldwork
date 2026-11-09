@@ -146,6 +146,42 @@ describe('progress reporting', () => {
     expect(got).toBeGreaterThan(0);
   });
 
+  it('draws preview frames more cheaply than the finished piece', () => {
+    // Previews are replaced within a fraction of a second, so they are drawn
+    // at fewer contour levels. Contouring them at full detail measured at a
+    // quarter of total runtime.
+    const previews: number[] = [];
+    const final = generateReaction(
+      { ...small, seed: 'cheap-previews', contours: 6 },
+      (progress) => previews.push(progress.scene.layers.length),
+    );
+    expect(previews.length).toBeGreaterThan(0);
+    for (const layers of previews) expect(layers).toBeLessThanOrEqual(2);
+    // The finished piece is unaffected by how the previews were drawn.
+    expect(final).toEqual(generateReaction({ ...small, seed: 'cheap-previews', contours: 6 }));
+  });
+
+  it('places preview geometry on the same canvas as the finished piece', () => {
+    // Previews may be decimated, so the scale must come from the field rather
+    // than the configured grid size or they would land in the wrong place.
+    const seen: Array<{ x: number; y: number }> = [];
+    const final = generateReaction(
+      { ...small, seed: 'preview-bounds', gridSize: 160, iterations: 300 },
+      (progress) => {
+        for (const layer of progress.scene.layers) {
+          for (const path of layer.paths) seen.push(...path);
+        }
+      },
+    );
+    expect(seen.length).toBeGreaterThan(0);
+    for (const point of seen) {
+      expect(point.x).toBeGreaterThanOrEqual(0);
+      expect(point.y).toBeGreaterThanOrEqual(0);
+      expect(point.x).toBeLessThanOrEqual(final.width);
+      expect(point.y).toBeLessThanOrEqual(final.height);
+    }
+  });
+
   it('generateReaction returns the same scene with and without onProgress', () => {
     const frames: number[] = [];
     const watched = generateReaction({ ...small, seed: 'scene-progress' }, (progress) => {

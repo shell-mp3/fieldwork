@@ -140,14 +140,17 @@ export function simulate(p: ReactionParams, hooks?: SimulateHooks): Field {
       const row = y * n;
       const rowUp = prevIdx[y]! * n;
       const rowDown = nextIdx[y]! * n;
-      for (let x = 0; x < n; x++) {
-        const xl = prevIdx[x]!;
-        const xr = nextIdx[x]!;
+
+      /**
+       * One cell, written out with explicit neighbour columns. Used only for
+       * the two columns that wrap; the interior runs the sliding window below.
+       * Every term is in the same order as laplacian(), so the two agree to
+       * the bit.
+       */
+      const edgeCell = (x: number, xl: number, xr: number): void => {
         const i = row + x;
         const av = a[i]!;
         const bv = b[i]!;
-
-        // Same term order as laplacian() above: ortho, then diag, then centre.
         const lapA =
           0.2 * (a[rowUp + x]! + a[rowDown + x]! + a[row + xl]! + a[row + xr]!) +
           0.05 *
@@ -158,13 +161,78 @@ export function simulate(p: ReactionParams, hooks?: SimulateHooks): Field {
           0.05 *
             (b[rowUp + xl]! + b[rowUp + xr]! + b[rowDown + xl]! + b[rowDown + xr]!) -
           bv;
-
         const reaction = av * bv * bv;
         const na = av + (diffusionA * lapA - reaction + feed * (1 - av)) * timeStep;
         const nb = bv + (diffusionB * lapB + reaction - killPlusFeed * bv) * timeStep;
         nextA[i] = na < 0 ? 0 : na > 1 ? 1 : na;
         nextB[i] = nb < 0 ? 0 : nb > 1 ? 1 : nb;
+      };
+
+      edgeCell(0, n - 1, 1);
+
+      /**
+       * Interior columns, as a sliding 3x3 window.
+       *
+       * The naive loop re-reads all nine neighbours per cell per field: 18
+       * loads to produce two values. Moving one column right, the old centre
+       * column becomes the left and the old right becomes the centre, so only
+       * three cells per field are genuinely new. Same values, same order, same
+       * bits — just six loads instead of eighteen.
+       */
+      let aUpL = a[rowUp]!;
+      let aMidL = a[row]!;
+      let aDownL = a[rowDown]!;
+      let bUpL = b[rowUp]!;
+      let bMidL = b[row]!;
+      let bDownL = b[rowDown]!;
+
+      let aUpC = a[rowUp + 1]!;
+      let aMidC = a[row + 1]!;
+      let aDownC = a[rowDown + 1]!;
+      let bUpC = b[rowUp + 1]!;
+      let bMidC = b[row + 1]!;
+      let bDownC = b[rowDown + 1]!;
+
+      for (let x = 1; x < n - 1; x++) {
+        const right = x + 1;
+        const aUpR = a[rowUp + right]!;
+        const aMidR = a[row + right]!;
+        const aDownR = a[rowDown + right]!;
+        const bUpR = b[rowUp + right]!;
+        const bMidR = b[row + right]!;
+        const bDownR = b[rowDown + right]!;
+
+        const lapA =
+          0.2 * (aUpC + aDownC + aMidL + aMidR) +
+          0.05 * (aUpL + aUpR + aDownL + aDownR) -
+          aMidC;
+        const lapB =
+          0.2 * (bUpC + bDownC + bMidL + bMidR) +
+          0.05 * (bUpL + bUpR + bDownL + bDownR) -
+          bMidC;
+
+        const reaction = aMidC * bMidC * bMidC;
+        const na = aMidC + (diffusionA * lapA - reaction + feed * (1 - aMidC)) * timeStep;
+        const nb = bMidC + (diffusionB * lapB + reaction - killPlusFeed * bMidC) * timeStep;
+        const i = row + x;
+        nextA[i] = na < 0 ? 0 : na > 1 ? 1 : na;
+        nextB[i] = nb < 0 ? 0 : nb > 1 ? 1 : nb;
+
+        aUpL = aUpC;
+        aMidL = aMidC;
+        aDownL = aDownC;
+        bUpL = bUpC;
+        bMidL = bMidC;
+        bDownL = bDownC;
+        aUpC = aUpR;
+        aMidC = aMidR;
+        aDownC = aDownR;
+        bUpC = bUpR;
+        bMidC = bMidR;
+        bDownC = bDownR;
       }
+
+      edgeCell(n - 1, n - 2, 0);
     }
     // Swap rather than copy: thousands of iterations of allocation is not free.
     const ta = a;
@@ -189,8 +257,10 @@ function fieldToScene(field: Field, p: ReactionParams): Scene {
   const span = max - min;
 
   // Fit the square simulation into the canvas, centred, inside the margin.
+  // Scaled by the field's own width rather than p.gridSize, so a decimated
+  // preview field lands in the same place as the full-resolution one.
   const usable = Math.min(p.width, p.height) - 2 * p.margin;
-  const scale = usable / (p.gridSize - 1);
+  const scale = usable / (field.width - 1);
   const offsetX = (p.width - usable) / 2;
   const offsetY = (p.height - usable) / 2;
 
@@ -236,6 +306,25 @@ function fieldToScene(field: Field, p: ReactionParams): Scene {
   };
 }
 
+/**
+ * Every `factor`-th sample, for preview frames only.
+ *
+ * Point sampling rather than averaging: a preview is replaced a fraction of a
+ * second later, and contouring a quarter as many cells is the whole point.
+ */
+function decimate(field: Field, factor: number): Field {
+  if (factor <= 1) return field;
+  const width = Math.floor((field.width - 1) / factor) + 1;
+  const height = Math.floor((field.height - 1) / factor) + 1;
+  const data = new Float32Array(width * height);
+  for (let y = 0; y < height; y++) {
+    const src = y * factor * field.width;
+    const dst = y * width;
+    for (let x = 0; x < width; x++) data[dst + x] = field.data[src + x * factor]!;
+  }
+  return { width, height, data };
+}
+
 export interface ReactionProgress {
   /** 0 to 1. */
   fraction: number;
@@ -260,12 +349,23 @@ export function generateReaction(
   if (!onProgress) return fieldToScene(simulate(p), p);
 
   // Around a dozen updates: frequent enough to read as growth, rare enough
-  // that contouring does not become a meaningful share of the runtime.
+  // that contouring does not dominate.
   const every = Math.max(1, Math.floor(p.iterations / 12));
+
+  // Preview frames are cheaper than the finished piece in two ways: fewer
+  // contour levels, and a decimated field. Drawing them at full detail
+  // measured at 24% of total runtime — a quarter of the wait spent on frames
+  // that are replaced a moment later.
+  const previewParams: ReactionParams = { ...p, contours: Math.min(2, p.contours) };
+  const previewFactor = p.gridSize >= 120 ? 2 : 1;
+
   const field = simulate(p, {
     every,
     onStep: (iteration, live) => {
-      onProgress({ fraction: iteration / p.iterations, scene: fieldToScene(live, p) });
+      onProgress({
+        fraction: iteration / p.iterations,
+        scene: fieldToScene(decimate(live, previewFactor), previewParams),
+      });
     },
   });
   return fieldToScene(field, p);
