@@ -32,7 +32,16 @@ The pleasant side effect is that a piece is a URL. Every image here is fully des
 by its seed and parameters, which is why the gallery stores 720px previews rather than
 full-resolution files — the command under each piece recreates the original exactly.
 
-## Quickstart
+## Using it
+
+**[Open the playground](https://shell-mp3.github.io/fieldwork/)** — nothing to install, works on a phone.
+
+- **Start from a preset.** Twelve of them, and they are the same definitions that render the gallery below — a preset and its image here cannot drift apart. Ten sliders with no guidance is a puzzle, not a tool.
+- **Tweak it.** Every parameter says in plain language what it does to the picture. Flow fields re-render the moment you let go of a slider.
+- **Watch it think.** Reaction-diffusion is several seconds of simulation, so the worker streams the pattern out as it grows instead of showing a spinner.
+- **Keep it.** PNG at 1×, 2× or 4×, or SVG at any size. *Copy link* puts the entire piece in the URL — seed, palette and every parameter — so sending someone the link sends them that exact image.
+
+## From the command line
 
 ```bash
 npm install
@@ -155,10 +164,16 @@ appear in the stitching map as extra ends and split one clean contour into fragm
 test asking "two blobs should be two paths" returned ten. Real reaction-diffusion fields
 are floating point and almost never hit it, so this would have sat in the code invisibly.
 
-**What I would not do again:** the playground regenerates on every control change, and a
-reaction-diffusion piece takes several seconds even after the optimisation. A progressive
-preview — simulate at a quarter resolution while dragging, full resolution on release —
-would be much better than a spinner and an apology.
+**The slowest thing became the best thing to look at.** A reaction-diffusion piece takes
+several seconds even after the optimisation, and my first instinct was to hide that behind
+a spinner. Instead the simulation now reports progress and the worker streams out
+intermediate scenes, so you watch the pattern grow. The hook only observes — a test asserts
+a run with it is byte-identical to a run without, because a progress callback that nudged
+the state would silently change what every seed produces.
+
+**Still unsolved:** that wait is real, not just unexplained. Simulating at quarter
+resolution while a slider is moving, or moving the whole thing to the GPU, would make
+reaction-diffusion feel live rather than watchable. Neither is a small change.
 
 **Not implemented:** dynamic Huffman tables; interlaced or palette PNG; GPU/WebGL
 simulation; animation or frame export; any colour space beyond sRGB hex.
