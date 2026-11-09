@@ -139,8 +139,6 @@ one by adding an object to that file; nothing else needs to change.
 
 ## What I learned / tradeoffs
 
-> Draft: rewrite this section in your own words before publishing.
-
 **Writing the PNG encoder was the right call, and it cost 20%.** Using `node:zlib` would
 have been three lines. But a determinism guarantee that depends on the host's zlib build
 isn't a guarantee, and zlib-ng has shifted output before. So the repo has its own DEFLATE:
