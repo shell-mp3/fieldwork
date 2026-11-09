@@ -1,0 +1,202 @@
+[
+  {
+    "id": "harbour-drift",
+    "title": "Harbour Drift",
+    "blurb": "Long braided channels. The classic flow field look.",
+    "algo": "flow",
+    "seed": "harbour-drift",
+    "palette": "kelp",
+    "params": {
+      "particles": 2600,
+      "steps": 460,
+      "noiseScale": 0.0016,
+      "octaves": 3
+    }
+  },
+  {
+    "id": "tidewrack",
+    "title": "Tidewrack",
+    "blurb": "A very low field scale: lazy, wide currents that cross the whole canvas.",
+    "algo": "flow",
+    "seed": "tidewrack-88",
+    "palette": "oxide",
+    "params": {
+      "particles": 3200,
+      "steps": 700,
+      "stepLength": 1.8,
+      "noiseScale": 0.0007,
+      "octaves": 2,
+      "lineWidth": 1,
+      "opacity": 0.7
+    }
+  },
+  {
+    "id": "foolscap",
+    "title": "Foolscap",
+    "blurb": "Five octaves of noise, hairline strokes. Dense and papery.",
+    "algo": "flow",
+    "seed": "foolscap",
+    "palette": "graphite",
+    "params": {
+      "particles": 2400,
+      "steps": 380,
+      "noiseScale": 0.0022,
+      "octaves": 5,
+      "lineWidth": 0.8,
+      "opacity": 0.75,
+      "colorScale": 0.0012
+    }
+  },
+  {
+    "id": "press-check",
+    "title": "Press Check",
+    "blurb": "Few particles, thick strokes. Reads as printed ink rather than line work.",
+    "algo": "flow",
+    "seed": "press-check-2",
+    "palette": "riso",
+    "params": {
+      "particles": 850,
+      "steps": 520,
+      "stepLength": 3,
+      "noiseScale": 0.0012,
+      "octaves": 2,
+      "lineWidth": 3.4,
+      "opacity": 0.9
+    }
+  },
+  {
+    "id": "undertow",
+    "title": "Undertow",
+    "blurb": "High field scale: tight turbulence instead of long channels.",
+    "algo": "flow",
+    "seed": "undertow-419",
+    "palette": "kelp",
+    "params": {
+      "particles": 3600,
+      "steps": 300,
+      "stepLength": 1.6,
+      "noiseScale": 0.0042,
+      "octaves": 4,
+      "lineWidth": 1,
+      "opacity": 0.8,
+      "colorScale": 0.0018
+    }
+  },
+  {
+    "id": "first-frost",
+    "title": "First Frost",
+    "blurb": "Long runs, short steps, a high minimum length. Only the survivors are drawn.",
+    "algo": "flow",
+    "seed": "first-frost",
+    "palette": "graphite",
+    "params": {
+      "particles": 1400,
+      "steps": 1100,
+      "stepLength": 1.2,
+      "noiseScale": 0.0009,
+      "octaves": 3,
+      "lineWidth": 0.6,
+      "opacity": 0.85,
+      "minLength": 120
+    }
+  },
+  {
+    "id": "coral-bloom",
+    "title": "Coral Bloom",
+    "blurb": "Gray-Scott in its coral-growth regime.",
+    "algo": "reaction",
+    "seed": "coral-7",
+    "palette": "riso",
+    "params": {
+      "gridSize": 200,
+      "iterations": 11000,
+      "feed": 0.0545,
+      "kill": 0.062,
+      "contours": 4,
+      "lineWidth": 1.4
+    }
+  },
+  {
+    "id": "mitosis",
+    "title": "Mitosis",
+    "blurb": "Feed and kill tuned so blobs grow and divide.",
+    "algo": "reaction",
+    "seed": "1842",
+    "palette": "oxide",
+    "params": {
+      "gridSize": 190,
+      "iterations": 14000,
+      "feed": 0.0367,
+      "kill": 0.0649,
+      "contours": 5,
+      "seedSpots": 26
+    }
+  },
+  {
+    "id": "labyrinth",
+    "title": "Labyrinth",
+    "blurb": "The maze regime: long parallel corridors that never quite close.",
+    "algo": "reaction",
+    "seed": "labyrinth-3",
+    "palette": "graphite",
+    "params": {
+      "gridSize": 200,
+      "iterations": 12000,
+      "feed": 0.029,
+      "kill": 0.057,
+      "contours": 3,
+      "lineWidth": 1.6,
+      "seedSpots": 30
+    }
+  },
+  {
+    "id": "solitons",
+    "title": "Solitons",
+    "blurb": "Isolated spots that hold their shape indefinitely.",
+    "algo": "reaction",
+    "seed": "solitons-x",
+    "palette": "kelp",
+    "params": {
+      "gridSize": 180,
+      "iterations": 10000,
+      "feed": 0.03,
+      "kill": 0.062,
+      "contours": 5,
+      "seedSpots": 22
+    }
+  },
+  {
+    "id": "worms",
+    "title": "Worms",
+    "blurb": "A high feed rate: wandering filaments that branch.",
+    "algo": "reaction",
+    "seed": "worms-61",
+    "palette": "oxide",
+    "params": {
+      "gridSize": 200,
+      "iterations": 9000,
+      "feed": 0.078,
+      "kill": 0.061,
+      "contours": 4,
+      "lineWidth": 1.4,
+      "seedSpots": 34
+    }
+  },
+  {
+    "id": "u-skate",
+    "title": "U-Skate",
+    "blurb": "U-Skate world. Gliders that drift and collide.",
+    "algo": "reaction",
+    "seed": "u-skate-world",
+    "palette": "riso",
+    "params": {
+      "gridSize": 190,
+      "iterations": 13000,
+      "feed": 0.062,
+      "kill": 0.0609,
+      "contours": 6,
+      "lineWidth": 1.1,
+      "seedSpots": 16
+    }
+  }
+]

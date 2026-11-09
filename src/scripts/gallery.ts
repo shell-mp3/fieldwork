@@ -8,21 +8,21 @@
 
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { generate, isAlgo, type Algo } from '../core/generate';
+import { generate } from '../core/generate';
 import { rasterize, downsample } from '../core/render/raster';
 import { encodePng } from '../core/render/png';
 import { countPaths } from '../core/types';
 import { getPalette } from '../core/palette';
+import { getPreset, type Preset } from '../core/presets';
 
+/**
+ * A manifest entry is just a filename and a preset id. The parameters live in
+ * src/presets.json, so the playground's presets and these images are the same
+ * definitions rather than two copies that drift.
+ */
 interface Piece {
   file: string;
-  title: string;
-  algo: string;
-  seed: string;
-  palette: string;
-  width?: number;
-  height?: number;
-  params?: Record<string, number>;
+  preset: string;
 }
 
 interface Manifest {
@@ -39,19 +39,17 @@ interface Manifest {
 const galleryDir = join(process.cwd(), 'gallery');
 const thumbsDir = join(galleryDir, 'thumbs');
 
-function reproduceCommand(piece: Piece, ext: string): string {
+function reproduceCommand(preset: Preset, file: string, ext: string): string {
   const parts = [
     'fieldwork render',
-    `--algo ${piece.algo}`,
-    `--seed ${piece.seed}`,
-    `--palette ${piece.palette}`,
+    `--algo ${preset.algo}`,
+    `--seed ${preset.seed}`,
+    `--palette ${preset.palette}`,
   ];
-  if (piece.width) parts.push(`--width ${piece.width}`);
-  if (piece.height) parts.push(`--height ${piece.height}`);
-  for (const [key, value] of Object.entries(piece.params ?? {})) {
+  for (const [key, value] of Object.entries(preset.params)) {
     parts.push(`--${key} ${value}`);
   }
-  parts.push(`--out ${piece.file}.${ext}`);
+  parts.push(`--out ${file}.${ext}`);
   return parts.join(' ');
 }
 
@@ -70,19 +68,14 @@ function main(): void {
   let totalBytes = 0;
 
   for (const piece of manifest.pieces) {
-    if (!isAlgo(piece.algo)) {
-      throw new Error(`Piece "${piece.file}" has unknown algo "${piece.algo}"`);
-    }
-    const algo: Algo = piece.algo;
+    const preset = getPreset(piece.preset);
     const started = Date.now();
 
     const scene = generate({
-      algo,
-      seed: piece.seed,
-      palette: piece.palette,
-      ...(piece.width ? { width: piece.width } : {}),
-      ...(piece.height ? { height: piece.height } : {}),
-      params: piece.params ?? {},
+      algo: preset.algo,
+      seed: preset.seed,
+      palette: preset.palette,
+      params: preset.params,
     });
 
     // Supersample then box-filter down, so thin strokes survive the shrink.
@@ -101,19 +94,21 @@ function main(): void {
         `${(png.length / 1024).toFixed(0)} KB  ${Date.now() - started}ms`,
     );
 
-    const palette = getPalette(piece.palette);
+    const palette = getPalette(preset.palette);
     rows.push(
       [
-        `### ${piece.title}`,
+        `### ${preset.title}`,
         '',
-        `![${piece.title}](thumbs/${piece.file}.png)`,
+        `![${preset.title}](thumbs/${piece.file}.png)`,
         '',
-        `**${algo}** · seed \`${piece.seed}\` · palette \`${piece.palette}\` — _${palette.inspiration}_`,
+        preset.blurb,
         '',
-        'Reproduce at full resolution:',
+        `**${preset.algo}** · seed \`${preset.seed}\` · palette \`${preset.palette}\` — _${palette.inspiration}_`,
+        '',
+        `[Open in the playground](https://shell-mp3.github.io/fieldwork/#preset=${preset.id}) · reproduce at full resolution:`,
         '',
         '```bash',
-        reproduceCommand(piece, 'svg'),
+        reproduceCommand(preset, piece.file, 'svg'),
         '```',
         '',
       ].join('\n'),
